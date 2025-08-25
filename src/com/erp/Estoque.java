@@ -127,9 +127,13 @@ public class Estoque {
         }
 
         if (titulo != null) {
-            titulo.setPaga(true);
-            saveTitulos();
-            System.out.println("Título pago com sucesso.");
+            if (!titulo.isPago()) {
+                titulo.setPaga(true);
+                saveTitulos();
+                System.out.println("Título pago com sucesso.");
+            } else {
+                System.out.println("O título já foi pago.");
+            }
         } else {
             System.out.println("Título não encontrado.");
         }
