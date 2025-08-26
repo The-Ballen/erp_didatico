@@ -8,11 +8,14 @@ public class Estoque {
     private List<Titulo> titulos;
     private List<Pessoa> pessoas;
 
-    private static final String PRODUTOS_ARQUIVO = "produtos.txt";
-    private static final String TITULOS_ARQUIVO = "titulos.txt";
-    private static final String PESSOAS_ARQUIVO = "pessoas.txt";
+    private static final String PRODUTOS_ARQUIVO = "database/produtos.txt";
+    private static final String TITULOS_ARQUIVO = "database/titulos.txt";
+    private static final String PESSOAS_ARQUIVO = "database/pessoas.txt";
 
     public Estoque() throws IOException {
+        File dbDir = new File("database/");
+        dbDir.mkdir();
+        
         produtos = new ArrayList<>();
         titulos = new ArrayList<>();
         pessoas = new ArrayList<>();
