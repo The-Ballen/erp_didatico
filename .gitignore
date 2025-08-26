@@ -24,6 +24,7 @@ hs_err_pid*
 replay_pid*
 
 # Arquivos da base de dados
-pessoas.txt
-produtos.txt
-titulos.txt
+database/
+
+# Diretório de testes
+teste/
