@@ -44,11 +44,17 @@ public class Estoque {
         String id = scanner.nextLine();
         System.out.print("Nome do Produto: ");
         String nome = scanner.nextLine();
-        System.out.print("Preço do Produto: ");
-        double preco = scanner.nextDouble();
+        System.out.print("Preço de compra do Produto: ");
+        double precoCompra = scanner.nextDouble();
+        scanner.nextLine();
+        System.out.print("Preço de venda do Produto: ");
+        double precoVenda = scanner.nextDouble();
+        scanner.nextLine();
+        System.out.print("Preço de venda do Produto: ");
+        int quantidade = scanner.nextInt();
         scanner.nextLine();
 
-        Produto produto = new Produto(id, nome, preco);
+        Produto produto = new Produto(id, nome, precoCompra, precoVenda, quantidade);
         produtos.add(produto);
         saveProdutos();
         System.out.println("Produto adicionado com sucesso.");
@@ -57,7 +63,7 @@ public class Estoque {
     public void listaProdutos() {
         System.out.println("Produtos:");
         for (Produto produto : produtos) {
-            System.out.println(produto.getId() + " - " + produto.getNome() + " - R$ " + produto.getPreco());
+            System.out.println("Id:" + produto.getId() + " | " + produto.getNome() + " | Preço de compra: R$ " + produto.getPrecoCompra() + " | Preço de venda: R$ " + produto.getPrecoVenda() + " | Quantidade em estoque: " + produto.getQuantidade());
         }
     }
 
@@ -74,15 +80,25 @@ public class Estoque {
         }
 
         if (produto != null) {
+            int quantidade = 0;
+            do {
+                System.out.print("Quantidade: ");
+                quantidade = scanner.nextInt();
+                scanner.nextLine();
+            } while (quantidade <= 0);
+            
+
             Pessoa fornecedor = buscarPessoaPorTipo(scanner, 2);
             if (fornecedor == null) {
                 System.out.println("Fornecedor não encontrado.");
                 return;
             }
 
-            Titulo titulo = new Titulo(UUID.randomUUID().toString(), produto.getPreco(), false, fornecedor.getId(), "a pagar");
+            Titulo titulo = new Titulo(UUID.randomUUID().toString(), produto.getPrecoCompra(), quantidade, false, fornecedor.getId(), "a pagar");
             titulos.add(titulo);
             saveTitulos();
+            produto.adicionarEstoque(quantidade);
+            saveProdutos();
             System.out.println("Compra registrada. Título a pagar gerado: " + titulo.getId());
         } else {
             System.out.println("Produto não encontrado.");
@@ -102,15 +118,29 @@ public class Estoque {
         }
 
         if (produto != null) {
+            int quantidade = 0;
+            do {
+                System.out.print("Quantidade: ");
+                quantidade = scanner.nextInt();
+                scanner.nextLine();
+            } while (quantidade <= 0);
+
+            if ((produto.getQuantidade() - quantidade) < 0) {
+                System.out.println("Estoque insuficiente! restam apenas: " + produto.getQuantidade());
+                return;
+            }
+
             Pessoa cliente = buscarPessoaPorTipo(scanner, 1);
             if (cliente == null) {
                 System.out.println("Cliente não encontrado.");
                 return;
             }
 
-            Titulo titulo = new Titulo(UUID.randomUUID().toString(), produto.getPreco(), false, cliente.getId(), "a receber");
+            Titulo titulo = new Titulo(UUID.randomUUID().toString(), produto.getPrecoVenda(), quantidade, false, cliente.getId(), "a receber");
             titulos.add(titulo);
             saveTitulos();
+            produto.removerEstoque(quantidade);
+            saveProdutos();
             System.out.println("Venda registrada. Título a receber gerado: " + titulo.getId());
         } else {
             System.out.println("Produto não encontrado.");
@@ -146,7 +176,7 @@ public class Estoque {
         System.out.println("Títulos em Aberto:");
         for (Titulo title : titulos) {
             if (!title.isPago()) {
-                System.out.println(title.getId() + " - R$ " + title.getQuantidade() + " - Pessoa: " + title.getPessoaId() + " - Tipo: " + title.getTipoTitulo());
+                System.out.println(title.getId() + " | R$ " + title.getValor() + " | Quantidade: " + title.getQuantidade() + " | Total: R$ " + title.getValor() * ((double) title.getQuantidade()) + " | Pessoa: " + title.getPessoaId() + " | Tipo: " + title.getTipoTitulo());
             }
         }
     }
