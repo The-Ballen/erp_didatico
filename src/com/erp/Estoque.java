@@ -99,6 +99,7 @@ public class Estoque {
             saveTitulos();
             produto.adicionarEstoque(quantidade);
             saveProdutos();
+            LogService.logCompra(produto, quantidade, fornecedor.getId());
             System.out.println("Compra registrada. Título a pagar gerado: " + titulo.getId());
         } else {
             System.out.println("Produto não encontrado.");
@@ -141,6 +142,7 @@ public class Estoque {
             saveTitulos();
             produto.removerEstoque(quantidade);
             saveProdutos();
+            LogService.logVenda(produto, quantidade, cliente.getId());
             System.out.println("Venda registrada. Título a receber gerado: " + titulo.getId());
         } else {
             System.out.println("Produto não encontrado.");

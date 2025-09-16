@@ -28,10 +28,13 @@ public class Main {
                     while (subMenu) {
                         System.out.println("\nGerenciamento de Produtos:");
                         System.out.println("1. Listar Produtos");
-                        System.out.println("2. Adicionar Produtos");
-                        //System.out.println("3. Editar Produtos (em breve)");
-                        //System.out.println("4. Remover Produtos (em breve)");
-                        System.out.println("3. Voltar");
+                        System.out.println("2. Adicionar Produto");
+                        //System.out.println("3. Editar Produto (em breve)");
+                        //System.out.println("4. Remover Produto (em breve)");
+                        System.out.println("3. Comprar Produto (Fornecedor)");
+                        System.out.println("4. Vender Produto (Cliente)");
+                        System.out.println("5. Relatório");
+                        System.out.println("6. Voltar");
                         
                         choice = 0;
                         System.out.print("Escolha uma opção: ");
@@ -46,6 +49,15 @@ public class Main {
                                 estoque.addProduto(scanner);
                                 break;
                             case 3:
+                                estoque.compraProduto(scanner);;
+                                break;
+                            case 4:
+                                estoque.vendaProduto(scanner);
+                                break;
+                            case 5:
+                                LogService.VerLog(scanner);
+                                break;
+                            case 6:
                                 subMenu = false;
                                 break;
                     
