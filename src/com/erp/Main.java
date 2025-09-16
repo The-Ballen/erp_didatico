@@ -10,86 +10,45 @@ public class Main {
 
         while (true) {
             System.out.println("\nMenu:");
-            System.out.println("1. Gerenciar Produtos");
-            System.out.println("2. Gerenciar Pessoas");
-            System.out.println("3. Listar Títulos em Aberto");
-            System.out.println("4. Efetuar Pagamento");
-            System.out.println("5. Sair");
-            int choice = 0;
-            boolean subMenu = false;
+            System.out.println("1. Adicionar Produto");
+            System.out.println("2. Listar Produtos");
+            System.out.println("3. Comprar Produto (Fornecedor)");
+            System.out.println("4. Vender Produto (Cliente)");
+            System.out.println("5. Efetuar Pagamento");
+            System.out.println("6. Listar Títulos em Aberto");
+            System.out.println("7. Cadastrar Pessoa");
+            System.out.println("8. Ver Log do Sistema");
+            System.out.println("9. Sair");
             System.out.print("Escolha uma opção: ");
-            choice = scanner.nextInt();
-            scanner.nextLine(); // Consumir '\n' do buffer
-            
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consumir nova linha
 
             switch (choice) {
                 case 1:
-                    subMenu = true;
-                    while (subMenu) {
-                        System.out.println("\nGerenciamento de Produtos:");
-                        System.out.println("1. Listar Produtos");
-                        System.out.println("2. Adicionar Produtos");
-                        //System.out.println("3. Editar Produtos (em breve)");
-                        //System.out.println("4. Remover Produtos (em breve)");
-                        System.out.println("3. Voltar");
-                        
-                        choice = 0;
-                        System.out.print("Escolha uma opção: ");
-                        choice = scanner.nextInt();
-                        scanner.nextLine();
-
-                        switch (choice) {
-                            case 1:
-                                estoque.listaProdutos();
-                                break;
-                            case 2:
-                                estoque.addProduto(scanner);
-                                break;
-                            case 3:
-                                subMenu = false;
-                                break;
-                    
-                            default:
-                                System.out.println("Opção inválida. Tente novamente.");
-                                break;
-                        }
-                    }
+                    estoque.addProduto(scanner);
                     break;
                 case 2:
-                    subMenu = true;
-                    while (subMenu) {
-                        System.out.println("\nGerenciamento de Pessoas:");
-                        //System.out.println("1. Listar Pessoas (em breve)");
-                        System.out.println("1. Cadastrar Pessoas");
-                        //System.out.println("3. Editar Pessoas (em breve)");
-                        //System.out.println("4. Remover Pessoas (em breve)");
-                        System.out.println("2. Voltar");
-
-                        choice = 0;
-                        System.out.print("Escolha uma opção: ");
-                        choice = scanner.nextInt();
-                        scanner.nextLine();
-                        switch (choice) {
-                            case 1:
-                                estoque.addPessoa(scanner);
-                                break;
-                            case 2:
-                                subMenu = false;
-                                break;
-                    
-                            default:
-                                System.out.println("Opção inválida. Tente novamente.");
-                                break;
-                        }
-                    }
+                    estoque.listaProdutos();
                     break;
                 case 3:
-                    estoque.listarTitulosDeDestaque();
+                    estoque.compraProduto(scanner);
                     break;
                 case 4:
-                    estoque.fazPagamento(scanner);
+                    estoque.vendaProduto(scanner);
                     break;
                 case 5:
+                    estoque.fazPagamento(scanner);
+                    break;
+                case 6:
+                    estoque.listarTitulosDeDestaque();
+                    break;
+                case 7:
+                    estoque.addPessoa(scanner);
+                    break;
+                case 8:
+                    LogService.VerLog(scanner);
+                    break;
+                case 9:
                     System.out.println("Saindo...");
                     return;
                 default:

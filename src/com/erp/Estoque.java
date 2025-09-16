@@ -50,7 +50,7 @@ public class Estoque {
         System.out.print("Preço de venda do Produto: ");
         double precoVenda = scanner.nextDouble();
         scanner.nextLine();
-        System.out.print("Preço de venda do Produto: ");
+        System.out.print("Quantidade para adicionar: ");
         int quantidade = scanner.nextInt();
         scanner.nextLine();
 
@@ -100,6 +100,10 @@ public class Estoque {
             produto.adicionarEstoque(quantidade);
             saveProdutos();
             System.out.println("Compra registrada. Título a pagar gerado: " + titulo.getId());
+
+            // Gera um Log de compra do produto para a pasta Logs
+            LogService.logCompra(produto, quantidade, fornecedor.getId());
+
         } else {
             System.out.println("Produto não encontrado.");
         }
@@ -142,6 +146,10 @@ public class Estoque {
             produto.removerEstoque(quantidade);
             saveProdutos();
             System.out.println("Venda registrada. Título a receber gerado: " + titulo.getId());
+
+            // Gera um Log de Venda do produto para a pasta Logs
+            LogService.logVenda(produto, quantidade, cliente.getId());
+
         } else {
             System.out.println("Produto não encontrado.");
         }
