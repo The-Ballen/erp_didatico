@@ -1,0 +1,2 @@
+Tipo,PessoaID,Produto,Quantidade,Data,Hora
+COMPRA,1,copo,4,16/09/2025,00:42:47
