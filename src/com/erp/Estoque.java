@@ -50,7 +50,7 @@ public class Estoque {
         System.out.print("Preço de venda do Produto: ");
         double precoVenda = scanner.nextDouble();
         scanner.nextLine();
-        System.out.print("Preço de venda do Produto: ");
+        System.out.print("Quantidade de estoque inicial: ");
         int quantidade = scanner.nextInt();
         scanner.nextLine();
 
