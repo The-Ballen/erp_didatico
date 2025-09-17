@@ -194,6 +194,15 @@ public class Estoque {
         return null;
     }
 
+    private Pessoa buscarPessoaPorId(Scanner scanner, String id) {
+        for (Pessoa p : pessoas) {
+            if (p.getId().equals(id)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
     private void carregaProduto() throws IOException {
         File file = new File(PRODUTOS_ARQUIVO);
         if (file.exists()) {
@@ -254,6 +263,82 @@ public class Estoque {
                 writer.write(pessoa.toString());
                 writer.newLine();
             }
+        }
+    }
+
+    public void listaPessoas() {
+        System.out.println("Pessoas:");
+        for (Pessoa pessoa : pessoas) {
+            System.out.println("Id: " + pessoa.getId() + " | Nome: \"" + pessoa.getNome() + "\" | Tipo: " + pessoa.getTipo());
+        }
+    }
+
+    public void editaPessoa(Scanner scanner) throws IOException {
+        if (pessoas.isEmpty()) {
+            System.out.println("Nenhuma pessoa cadastrada para editar.");
+            return;
+        }
+
+        System.out.print("Digite o ID da pessoa que deseja editar: ");
+        String id = scanner.nextLine();
+        Pessoa pessoa = buscarPessoaPorId(scanner, id.trim());
+
+        if (pessoa != null) {
+            System.out.println("Editando: " + pessoa.getNome());
+
+            System.out.print("Novo ID (deixe em branco para não alterar): ");
+            String novoId = scanner.nextLine();
+            if (!novoId.trim().isEmpty()) {
+                pessoa.setId(novoId.trim());
+            }
+
+            System.out.print("Novo Nome (deixe em branco para não alterar): ");
+            String novoNome = scanner.nextLine();
+            if (!novoNome.trim().isEmpty()) {
+                pessoa.setNome(novoNome.trim());
+            }
+
+            int novoTipo = 0;
+            String linha;
+            while(true) {
+                System.out.print("Novo Tipo [1-Cliente, 2-Fornecedor, 3-Funcionário] (deixe em branco para não alterar): ");
+                linha = scanner.nextLine();
+                if (linha.trim().isEmpty())
+                    break;
+                try {
+                    novoTipo = Integer.parseInt(linha.trim());
+                    if (novoTipo >= 1 && novoTipo <=3)
+                        break;
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+            if (novoTipo != 0)
+                pessoa.setTipo(novoTipo);
+
+            savePessoas(); // Salva as alterações no arquivo
+            System.out.println("Pessoa editada com sucesso!");
+        } else {
+            System.out.println("ID não encontrado!");
+        }
+    }
+
+    public void removePessoa(Scanner scanner) throws IOException {
+        if (pessoas.isEmpty()) {
+            System.out.println("Nenhuma pessoa cadastrada para remover.");
+            return;
+        }
+
+        System.out.print("Digite o ID da pessoa que deseja remover: ");
+        String id = scanner.nextLine();
+        Pessoa pessoa = buscarPessoaPorId(scanner, id);
+
+        if (pessoa != null) {
+            Pessoa removida = pessoas.remove(pessoas.indexOf(pessoa));
+            savePessoas(); // Salva as alterações no arquivo
+            System.out.println("Pessoa \"" + removida.getNome() + "\" removida com sucesso!");
+        } else {
+            System.out.println("ID não encontrado!");
         }
     }
 }

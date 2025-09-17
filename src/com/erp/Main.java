@@ -71,11 +71,11 @@ public class Main {
                     subMenu = true;
                     while (subMenu) {
                         System.out.println("\nGerenciamento de Pessoas:");
-                        //System.out.println("1. Listar Pessoas (em breve)");
-                        System.out.println("1. Cadastrar Pessoas");
-                        //System.out.println("3. Editar Pessoas (em breve)");
-                        //System.out.println("4. Remover Pessoas (em breve)");
-                        System.out.println("2. Voltar");
+                        System.out.println("1. Listar Pessoas");
+                        System.out.println("2. Cadastrar Pessoas");
+                        System.out.println("3. Editar Pessoas");
+                        System.out.println("4. Remover Pessoas");
+                        System.out.println("5. Voltar");
 
                         choice = 0;
                         System.out.print("Escolha uma opção: ");
@@ -83,9 +83,18 @@ public class Main {
                         scanner.nextLine();
                         switch (choice) {
                             case 1:
-                                estoque.addPessoa(scanner);
+                                estoque.listaPessoas();;
                                 break;
                             case 2:
+                                estoque.addPessoa(scanner);
+                                break;
+                            case 3:
+                                estoque.editaPessoa(scanner);
+                                break;
+                            case 4:
+                                estoque.removePessoa(scanner);
+                                break;
+                            case 5:
                                 subMenu = false;
                                 break;
                     

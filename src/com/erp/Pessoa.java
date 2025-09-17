@@ -23,6 +23,18 @@ public class Pessoa {
         return nome;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setTipo(int tipo) {
+        this.tipo = tipo;
+    }
+
     @Override
     public String toString() {
         return id + "," + tipo + "," + nome;
