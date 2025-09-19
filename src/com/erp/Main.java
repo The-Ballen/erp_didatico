@@ -12,9 +12,10 @@ public class Main {
             System.out.println("\nMenu:");
             System.out.println("1. Gerenciar Produtos");
             System.out.println("2. Gerenciar Pessoas");
-            System.out.println("3. Listar Títulos em Aberto");
-            System.out.println("4. Efetuar Pagamento");
-            System.out.println("5. Sair");
+            System.out.println("3. Análise Preditiva");
+            System.out.println("4. Listar Títulos em Aberto");
+            System.out.println("5. Efetuar Pagamento");
+            System.out.println("6. Sair");
             int choice = 0;
             boolean subMenu = false;
             System.out.print("Escolha uma opção: ");
@@ -105,12 +106,41 @@ public class Main {
                     }
                     break;
                 case 3:
-                    estoque.listarTitulosDeDestaque();
+                    subMenu = true;
+                    while (subMenu) {
+                        System.out.println("\nAnálise Preditiva:");
+                        System.out.println("1. Análise de Curva ABC");
+                        System.out.println("2. Previsão de Demanda");
+                        System.out.println("3. Voltar");
+
+                        choice = 0;
+                        System.out.print("Escolha uma opção: ");
+                        choice = scanner.nextInt();
+                        scanner.nextLine();
+
+                        switch (choice) {
+                            case 1:
+                                AnalisePreditiva.executarAnaliseCurvaABC();
+                                break;
+                            case 2:
+                                AnalisePreditiva.executarPrevisaoDeDemandaPonderada();
+                                break;
+                            case 3:
+                                subMenu = false;
+                                break;
+                            default:
+                                System.out.println("Opção inválida. Tente novamente.");
+                                break;
+                        }
+                    }
                     break;
                 case 4:
-                    estoque.fazPagamento(scanner);
+                    estoque.listarTitulosDeDestaque();
                     break;
                 case 5:
+                    estoque.fazPagamento(scanner);
+                    break;
+                case 6:
                     System.out.println("Saindo...");
                     return;
                 default:
