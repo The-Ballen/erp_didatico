@@ -8,11 +8,12 @@ Um ERP didático utilizado na disciplina de Administração do curso de graduaç
 
 #### Compile:
 ```sh
-javac src/com/erp/*.java -Werror -verbose -d ./bin/
+javac -d bin/ -cp "lib/sqlite-jdbc-3.50.3.0.jar" src/com/erp/*.java -Werror -verbose -encoding UTF-8
+
+jar cfe builds/erp.jar com.erp.Main -C bin/ .
 ```
 
 #### Run:
 ```sh
-java -cp bin/ com.erp.Main
+java --enable-native-access=ALL-UNNAMED -cp "builds/erp.jar;lib/sqlite-jdbc-3.50.3.0.jar" com.erp.Main
 ```
-
