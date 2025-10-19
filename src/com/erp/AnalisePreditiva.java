@@ -1,7 +1,10 @@
 package com.erp;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,14 +14,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class AnalisePreditiva {
-
-    private static final String ARQUIVO_DE_LOGS = "database/logs.txt";
-    private static final String ARQUIVO_DE_PRODUTOS = "database/produtos.txt";
-
-    // ===================================================================================
-    // --- INÍCIO: LÓGICA DE ANÁLISE DE CURVA ABCD ---
-    // ===================================================================================
-
     /**
      * Estrutura para armazenar dados de faturamento de um produto específico.
      * Facilita a ordenação e o cálculo dos percentuais para a Curva ABCD.
@@ -70,48 +65,65 @@ public class AnalisePreditiva {
     }
 
     /**
-     * Carrega os produtos do arquivo de texto e os organiza em um Mapa para acesso rápido.
+     * Carrega os produtos do banco de dados e os organiza em um Mapa.
      * @return Um Mapa onde a chave é o ID do produto e o valor é o objeto Produto.
-     * @throws IOException Se ocorrer um erro na leitura do arquivo.
+     * @throws IOException Se ocorrer um erro na leitura do banco.
      */
     private static Map<String, Produto> carregarProdutosDoArquivo() throws IOException {
         Map<String, Produto> produtos = new HashMap<>();
-        try (BufferedReader leitor = new BufferedReader(new FileReader(ARQUIVO_DE_PRODUTOS))) {
-            String linha;
-            while ((linha = leitor.readLine()) != null) {
-                Produto produto = Produto.fromString(linha);
+        String sql = "SELECT * FROM Produtos";
+        
+        try (Connection conn = DbManager.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Produto produto = new Produto(
+                    rs.getString("id"),
+                    rs.getString("nome"),
+                    rs.getDouble("precoCompra"),
+                    rs.getDouble("precoVenda"),
+                    rs.getInt("quantidade")
+                );
                 produtos.put(produto.getId(), produto);
             }
+        } catch (SQLException e) {
+            System.err.println("Erro ao carregar produtos para análise: " + e.getMessage());
+            // Lança IOException para manter compatibilidade com a assinatura original
+            throw new IOException("Erro de banco de dados", e); 
         }
         return produtos;
     }
 
     /**
-     * Processa o arquivo de logs para calcular o faturamento total por produto.
+     * Processa a tabela de logs para calcular o faturamento total por produto.
      * @param mapaDeProdutos Mapa com os produtos cadastrados para consultar o preço de venda.
      * @return Um Mapa onde a chave é o ID do produto e o valor é o seu faturamento total.
-     * @throws IOException Se ocorrer um erro na leitura do arquivo.
+     * @throws IOException Se ocorrer um erro na leitura do banco.
      */
     private static Map<String, Double> apurarFaturamentoDeVendasPorProduto(Map<String, Produto> mapaDeProdutos) throws IOException {
         Map<String, Double> faturamento = new HashMap<>();
-        try (BufferedReader leitor = new BufferedReader(new FileReader(ARQUIVO_DE_LOGS))) {
-            leitor.readLine(); // Pula a linha do cabeçalho
-            String linha;
-            while ((linha = leitor.readLine()) != null) {
-                String[] dados = linha.split(",");
-                boolean ehRegistroDeVenda = dados.length >= 4 && dados[0].trim().equalsIgnoreCase("VENDA");
+        
+        // Busca apenas logs de VENDA
+        String sql = "SELECT ProdutoID, Quantidade FROM Logs WHERE Tipo = 'VENDA'";
 
-                if (ehRegistroDeVenda) {
-                    String produtoId = dados[2].trim();
-                    int quantidade = Integer.parseInt(dados[3].trim());
+        try (Connection conn = DbManager.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
-                    Produto produto = mapaDeProdutos.get(produtoId);
-                    if (produto != null) {
-                        double valorDaVenda = produto.getPrecoVenda() * quantidade;
-                        faturamento.put(produtoId, faturamento.getOrDefault(produtoId, 0.0) + valorDaVenda);
-                    }
+            while (rs.next()) {
+                String produtoId = rs.getString("ProdutoID");
+                int quantidade = rs.getInt("Quantidade");
+
+                Produto produto = mapaDeProdutos.get(produtoId);
+                if (produto != null) {
+                    double valorDaVenda = produto.getPrecoVenda() * quantidade;
+                    faturamento.put(produtoId, faturamento.getOrDefault(produtoId, 0.0) + valorDaVenda);
                 }
             }
+        } catch (SQLException e) {
+             System.err.println("Erro ao apurar faturamento dos logs: " + e.getMessage());
+             throw new IOException("Erro de banco de dados", e);
         }
         return faturamento;
     }
@@ -150,23 +162,26 @@ public class AnalisePreditiva {
 
         double faturamentoAcumulado = 0.0;
 
-
-
-        // ------------- Solução temporária -------------
+        // ------------- Solução temporária (corrigida para evitar bugs) -------------
         double epsilon = 1e-9;
-        if (!produtosOrdenados.isEmpty() &&
+        if (faturamentoGeral > epsilon && // Evita divisão por zero se faturamentoGeral for 0
+            !produtosOrdenados.isEmpty() &&
             Math.abs(produtosOrdenados.get(0).faturamentoDoProduto - faturamentoGeral) < epsilon) {
+            
             produtosClassificados.get('A').add(produtosOrdenados.get(0));
-            // os demais (se existirem) podem permanecer em D ou em uma outra regra que queira aplicar
+            // os demais (se existirem) vão para a classe D
+            for(int i = 1; i < produtosOrdenados.size(); i++) {
+                produtosClassificados.get('D').add(produtosOrdenados.get(i));
+            }
             return produtosClassificados;
         }
         // ----------------------------------------------
 
-
-
         for (ProdutoFaturamento pf : produtosOrdenados) {
             faturamentoAcumulado += pf.faturamentoDoProduto;
-            pf.percentualAcumulado = (faturamentoAcumulado / faturamentoGeral) * 100.0;
+            
+            // Proteção contra divisão por zero se faturamentoGeral for 0
+            pf.percentualAcumulado = (faturamentoGeral > epsilon) ? (faturamentoAcumulado / faturamentoGeral) * 100.0 : 0.0;
 
             if (pf.percentualAcumulado <= 70.0) {
                 produtosClassificados.get('A').add(pf);
@@ -219,8 +234,10 @@ public class AnalisePreditiva {
         System.out.printf("%-5s | %-35s | %-15s | %s%n", "ID", "Produto", "Faturamento", "% do Total");
         System.out.println("----------------------------------------------------------------------");
 
+        double epsilon = 1e-9;
         for (ProdutoFaturamento pf : produtos) {
-            double percentualIndividual = (pf.faturamentoDoProduto / faturamentoGeral) * 100.0;
+            // Proteção contra divisão por zero
+            double percentualIndividual = (faturamentoGeral > epsilon) ? (pf.faturamentoDoProduto / faturamentoGeral) * 100.0 : 0.0;
             System.out.printf("%-5s | %-35.35s | R$ %-12.2f | %.2f%%%n",
                     pf.produto.getId(),
                     pf.produto.getNome(),
@@ -297,28 +314,32 @@ public class AnalisePreditiva {
      * @return Mapa com ID do produto e uma lista de 6 posições com as quantidades vendidas.
      */
     private static Map<String, List<Integer>> apurarVendasUltimosMeses(Map<String, Produto> mapaDeProdutos) throws IOException, ParseException {
-        SimpleDateFormat formatadorData = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat formatadorData = new SimpleDateFormat("yyyy-MM-dd");
         Map<String, TreeMap<YearMonth, Integer>> vendasAgregadas = new HashMap<>();
 
-        try (BufferedReader leitor = new BufferedReader(new FileReader(ARQUIVO_DE_LOGS))) {
-            leitor.readLine(); // Pula cabeçalho
-            String linha;
-            while ((linha = leitor.readLine()) != null) {
-                String[] dados = linha.split(",");
-                if (dados.length >= 5 && dados[0].trim().equalsIgnoreCase("VENDA")) {
-                    Date dataVenda = formatadorData.parse(dados[4].trim());
-                    YearMonth mesAno = YearMonth.from(dataVenda.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-                    String produtoId = dados[2].trim();
-                    int quantidade = Integer.parseInt(dados[3].trim());
+        String sql = "SELECT ProdutoID, Quantidade, Data FROM Logs WHERE Tipo = 'VENDA'";
 
-                    if (mapaDeProdutos.containsKey(produtoId)) {
-                        vendasAgregadas.computeIfAbsent(produtoId, _ -> new TreeMap<>())
-                                .merge(mesAno, quantidade, Integer::sum);
-                    }
+        try (Connection conn = DbManager.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Date dataVenda = formatadorData.parse(rs.getString("Data")); // Parse YYYY-MM-DD
+                YearMonth mesAno = YearMonth.from(dataVenda.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+                String produtoId = rs.getString("ProdutoID");
+                int quantidade = rs.getInt("Quantidade");
+
+                if (mapaDeProdutos.containsKey(produtoId)) {
+                    vendasAgregadas.computeIfAbsent(produtoId, _ -> new TreeMap<>())
+                            .merge(mesAno, quantidade, Integer::sum);
                 }
             }
+        } catch (SQLException e) {
+             System.err.println("Erro ao apurar vendas mensais: " + e.getMessage());
+             throw new IOException("Erro de banco de dados", e);
         }
 
+        // O restante da lógica deste método para montar o histórico final permanece idêntico
         Map<String, List<Integer>> historicoFinal = new HashMap<>();
         YearMonth mesAtual = YearMonth.now();
 
