@@ -47,11 +47,11 @@ public class Estoque {
      * @throws RuntimeException if the database connection fails.
      */
     public void addPessoa(Scanner scanner) throws RuntimeException {
-        System.out.print("ID da Pessoa: ");
+        System.out.print(LanguageService.getString("stock.person.prompt.id"));
         String id = scanner.nextLine();
-        System.out.print("Nome da Pessoa: ");
+        System.out.print(LanguageService.getString("stock.person.prompt.name"));
         String nome = scanner.nextLine();
-        System.out.print("Tipo de Pessoa (1-Cliente, 2-Fornecedor, 3-Funcionário): ");
+        System.out.print(LanguageService.getString("stock.person.prompt.type"));
         int tipo = scanner.nextInt();
         scanner.nextLine();
 
@@ -67,10 +67,10 @@ public class Estoque {
 
             // Adiciona à memória APÓS sucesso no banco de dados
             pessoas.add(pessoa);
-            System.out.println("Pessoa adicionada com sucesso.");
+            System.out.println(LanguageService.getString("stock.person.add.success"));
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao adicionar pessoa: " + e.getMessage());
+            throw new RuntimeException(LanguageService.getFormattedString("error.person.add", e.getMessage()));
         }
     }
 
@@ -84,14 +84,14 @@ public class Estoque {
      * @throws RuntimeException if the database connection fails.
      */
     public void addProduto(Scanner scanner) throws IOException {
-        System.out.print("ID do Produto: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.id"));
         String id = scanner.nextLine();
-        System.out.print("Nome do Produto: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.name"));
         String nome = scanner.nextLine();
-        System.out.print("Preço de compra do Produto: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.purchase_price"));
         double precoCompra = scanner.nextDouble();
         scanner.nextLine();
-        System.out.print("Preço de venda do Produto: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.sale_price"));
         double precoVenda = scanner.nextDouble();
         scanner.nextLine();
 
@@ -115,7 +115,7 @@ public class Estoque {
         }
         // --- FIM DA INTEGRAÇÃO WEKA ---
 
-        System.out.print("Quantidade de estoque inicial: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.initial_stock"));
         int quantidade = scanner.nextInt();
         scanner.nextLine();
 
@@ -134,10 +134,10 @@ public class Estoque {
             pstmt.executeUpdate();
 
             produtos.add(produto);
-            System.out.println("Produto adicionado com sucesso.");
+            System.out.println(LanguageService.getString("stock.product.add.success"));
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao adicionar produto: " + e.getMessage());
+            throw new RuntimeException(LanguageService.getFormattedString("error.product.add", e.getMessage()));
         }
     }
 
@@ -145,16 +145,15 @@ public class Estoque {
      * Prints a formatted list of all products currently loaded in memory.
      */
     public void listaProdutos() {
-        System.out.println("Produtos:");
+        System.out.println(LanguageService.getString("stock.product.list.title"));
         for (Produto produto : produtos) {
-            System.out.println(
-                "Id:" + produto.getId() + 
-                " | " + produto.getNome() + 
-                " | Categoria: " + produto.getCategoria() + 
-                " | Preço de compra: R$ " + produto.getPrecoCompra() + 
-                " | Preço de venda: R$ " + produto.getPrecoVenda() + 
-                " | Quantidade em estoque: " + produto.getQuantidade()
-                );
+            System.out.println(LanguageService.getFormattedString("stock.product.list.details",
+                produto.getId(),
+                produto.getNome(),
+                produto.getPrecoCompra(),
+                produto.getPrecoVenda(),
+                produto.getQuantidade())
+            );
         }
     }
 
@@ -173,7 +172,7 @@ public class Estoque {
      * @throws RuntimeException if database connection fails.
      */
     public void compraProduto(Scanner scanner) throws IOException {
-        System.out.print("ID do Produto a comprar: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.buy"));
         String produtoId = scanner.nextLine();
 
         Produto produto = null;
@@ -187,14 +186,14 @@ public class Estoque {
         if (produto != null) {
             int quantidade = 0;
             do {
-                System.out.print("Quantidade: ");
+                System.out.print(LanguageService.getString("stock.product.prompt.quantity"));
                 quantidade = scanner.nextInt();
                 scanner.nextLine();
             } while (quantidade <= 0);
             
             Pessoa fornecedor = buscarPessoaPorTipo(scanner, 2); // 2 = Fornecedor
             if (fornecedor == null) {
-                System.out.println("Fornecedor não encontrado.");
+                System.out.println(LanguageService.getString("stock.person.supplier.notfound"));
                 return;
             }
 
@@ -234,19 +233,19 @@ public class Estoque {
                     
                     // 5. Log (o LogService será modificado também)
                     LogService.logCompra(produto, quantidade, fornecedor.getId());
-                    System.out.println("Compra registrada. Título a pagar gerado: " + titulo.getId());
+                    System.out.println(LanguageService.getFormattedString("stock.product.buy.success", titulo.getId()));
 
                 } catch (SQLException e) {
                     conn.rollback(); // Desfaz a transação em caso de erro
-                    System.err.println("Erro ao registrar compra: " + e.getMessage());
+                    System.err.println(LanguageService.getFormattedString("error.purchase.register", e.getMessage()));
                 } finally {
                     conn.setAutoCommit(true); // Reabilita o auto-commit
                 }
             } catch (SQLException e) {
-                System.err.println("Erro de conexão ao comprar: " + e.getMessage());
+                System.err.println(LanguageService.getFormattedString("error.purchase.connection", e.getMessage()));
             }
         } else {
-            System.out.println("Produto não encontrado.");
+            System.out.println(LanguageService.getString("stock.product.notfound"));
         }
     }
 
@@ -265,7 +264,7 @@ public class Estoque {
      * @throws RuntimeException if database connection fails.
      */
     public void vendaProduto(Scanner scanner) throws IOException {
-        System.out.print("ID do Produto a vender: ");
+        System.out.print(LanguageService.getString("stock.product.prompt.sell"));
         String produtoId = scanner.nextLine();
 
         Produto produto = null;
@@ -279,19 +278,19 @@ public class Estoque {
         if (produto != null) {
             int quantidade = 0;
             do {
-                System.out.print("Quantidade: ");
+                System.out.print(LanguageService.getString("stock.product.prompt.quantity"));
                 quantidade = scanner.nextInt();
                 scanner.nextLine();
             } while (quantidade <= 0);
 
             if ((produto.getQuantidade() - quantidade) < 0) {
-                System.out.println("Estoque insuficiente! restam apenas: " + produto.getQuantidade());
+                System.out.println(LanguageService.getFormattedString("stock.product.insufficient_stock", produto.getQuantidade()));
                 return;
             }
 
             Pessoa cliente = buscarPessoaPorTipo(scanner, 1); // 1 = Cliente
             if (cliente == null) {
-                System.out.println("Cliente não encontrado.");
+                System.out.println(LanguageService.getString("stock.person.customer.notfound"));
                 return;
             }
 
@@ -328,19 +327,19 @@ public class Estoque {
                     produto.removerEstoque(quantidade);
                     
                     LogService.logVenda(produto, quantidade, cliente.getId());
-                    System.out.println("Venda registrada. Título a receber gerado: " + titulo.getId());
+                    System.out.println(LanguageService.getFormattedString("stock.product.sell.success", titulo.getId()));
 
                 } catch (SQLException e) {
                     conn.rollback(); 
-                    System.err.println("Erro ao registrar venda: " + e.getMessage());
+                    System.err.println(LanguageService.getFormattedString("error.sale.register", e.getMessage()));
                 } finally {
                     conn.setAutoCommit(true);
                 }
             } catch (SQLException e) {
-                System.err.println("Erro de conexão ao vender: " + e.getMessage());
+                System.err.println(LanguageService.getFormattedString("error.sale.connection", e.getMessage()));
             }
         } else {
-            System.out.println("Produto não encontrado.");
+            System.out.println(LanguageService.getString("stock.product.notfound"));
         }
     }
 
@@ -354,7 +353,7 @@ public class Estoque {
      * @throws RuntimeException if the database connection fails.
      */
     public void fazPagamento(Scanner scanner) throws RuntimeException {
-        System.out.print("ID do Título a pagar: ");
+        System.out.print(LanguageService.getString("stock.title.prompt.pay"));
         String tituloId = scanner.nextLine();
 
         Titulo titulo = null;
@@ -378,28 +377,32 @@ public class Estoque {
 
                     if (affectedRows > 0) {
                         titulo.setPaga(true); // Atualiza objeto em memória
-                        System.out.println("Título pago com sucesso.");
+                        System.out.println(LanguageService.getString("stock.title.pay.success"));
                     } else {
-                        System.out.println("Erro: Título não encontrado no banco de dados.");
+                        System.out.println(LanguageService.getString("error.title.notfound.db"));
                     }
 
                 } catch (SQLException e) {
-                    System.err.println("Erro ao fazer pagamento: " + e.getMessage());
+                    System.err.println(LanguageService.getFormattedString("error.payment.generic", e.getMessage()));
                 }
+            } else {
+                System.out.println(LanguageService.getString("stock.title.already_paid"));
+            }
         } else {
-            System.out.println("Título não encontrado.");
+            System.out.println(LanguageService.getString("stock.title.notfound"));
         }
     }
-}
 
     /**
      * Prints a formatted list of all open titles from the in-memory list.
      */
     public void listarTitulosDeDestaque() {
-        System.out.println("Títulos em Aberto:");
+        System.out.println(LanguageService.getString("stock.title.list.open"));
         for (Titulo title : titulos) {
             if (!title.isPago()) {
-                System.out.println(title.getId() + " | R$ " + title.getValor() + " | Quantidade: " + title.getQuantidade() + " | Total: R$ " + title.getValor() * ((double) title.getQuantidade()) + " | Pessoa: " + title.getPessoaId() + " | Tipo: " + title.getTipoTitulo());
+                 System.out.println(LanguageService.getFormattedString("stock.title.list.details",
+                    title.getId(), title.getValor(), title.getQuantidade(),
+                    title.getValor() * title.getQuantidade(), title.getPessoaId(), title.getTipoTitulo()));
             }
         }
     }
@@ -412,7 +415,7 @@ public class Estoque {
      * @return The matching {@code Pessoa} object, or {@code null} if not found.
      */
     private Pessoa buscarPessoaPorTipo(Scanner scanner, int tipo) {
-        System.out.print("ID da Pessoa (tipo " + tipo + "): ");
+        System.out.print(LanguageService.getFormattedString("stock.person.prompt.by_type", tipo));
         String id = scanner.nextLine();
         for (Pessoa p : pessoas) {
             if (p.getId().equals(id) && p.getTipo() == tipo) {
@@ -462,7 +465,7 @@ public class Estoque {
                 produtos.add(produto);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal Error: Could not load products from database. " + e.getMessage(), e);
+            throw new RuntimeException(LanguageService.getString("error.db.load_products") + e.getMessage(), e);
         }
     }
 
@@ -491,7 +494,7 @@ public class Estoque {
                 titulos.add(titulo);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal Error: Could not load titulos from database. " + e.getMessage(), e);
+            throw new RuntimeException(LanguageService.getString("error.db.load_titles") + e.getMessage(), e);
         }
     }
 
@@ -517,7 +520,7 @@ public class Estoque {
                 pessoas.add(pessoa);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal Error: Could not load pessoas from database. " + e.getMessage(), e);
+            throw new RuntimeException(LanguageService.getString("error.db.load_people") + e.getMessage(), e);
         }
     }
 
@@ -525,9 +528,10 @@ public class Estoque {
      * Prints a formatted list of all people from the in-memory list.
      */
     public void listaPessoas() {
-        System.out.println("Pessoas:");
+        System.out.println(LanguageService.getString("stock.person.list.title"));
         for (Pessoa pessoa : pessoas) {
-            System.out.println("Id: " + pessoa.getId() + " | Nome: \"" + pessoa.getNome() + "\" | Tipo: " + pessoa.getTipo());
+            System.out.println(LanguageService.getFormattedString("stock.person.list.details",
+                pessoa.getId(), pessoa.getNome(), pessoa.getTipo()));
         }
     }
 
@@ -545,16 +549,16 @@ public class Estoque {
      */
     public void editaPessoa(Scanner scanner) throws RuntimeException {
         if (pessoas.isEmpty()) {
-            System.out.println("Nenhuma pessoa cadastrada para editar.");
+            System.out.println(LanguageService.getString("stock.person.edit.none"));
             return;
         }
 
-        System.out.print("Digite o ID da pessoa que deseja editar: ");
+        System.out.print(LanguageService.getString("stock.person.prompt.edit"));
         String id = scanner.nextLine();
         Pessoa pessoa = buscarPessoaPorId(id.trim()); // Usa a lista em memória, que é mais rápida
 
         if (pessoa != null) {
-            System.out.println("Editando: " + pessoa.getNome());
+            System.out.println(LanguageService.getFormattedString("stock.person.editing", pessoa.getNome()));
 
             // Variáveis temporárias para o SQL
             String idOriginal = pessoa.getId();
@@ -562,13 +566,13 @@ public class Estoque {
             String novoNome = pessoa.getNome();
             int novoTipo = pessoa.getTipo();
 
-            System.out.print("Novo ID (deixe em branco para não alterar): ");
+            System.out.print(LanguageService.getString("stock.person.prompt.new_id"));
             String inputId = scanner.nextLine();
             if (!inputId.trim().isEmpty()) {
                 novoId = inputId.trim();
             }
 
-            System.out.print("Novo Nome (deixe em branco para não alterar): ");
+            System.out.print(LanguageService.getString("stock.person.prompt.new_name"));
             String inputNome = scanner.nextLine();
             if (!inputNome.trim().isEmpty()) {
                 novoNome = inputNome.trim();
@@ -576,7 +580,7 @@ public class Estoque {
 
             String linha;
             while(true) {
-                System.out.print("Novo Tipo [1-Cliente, 2-Fornecedor, 3-Funcionário] (deixe em branco para não alterar): ");
+                System.out.print(LanguageService.getString("stock.person.prompt.new_type"));
                 linha = scanner.nextLine();
                 if (linha.trim().isEmpty())
                     break;
@@ -608,15 +612,15 @@ public class Estoque {
                     pessoa.setId(novoId);
                     pessoa.setNome(novoNome);
                     pessoa.setTipo(novoTipo);
-                    System.out.println("Pessoa editada com sucesso!");
+                    System.out.println(LanguageService.getString("stock.person.edit.success"));
                 } else {
-                     System.out.println("ID não encontrado no banco de dados!");
+                    System.out.println(LanguageService.getString("error.id.notfound.db"));
                 }
             } catch (SQLException e) {
-                System.err.println("Erro ao editar pessoa: " + e.getMessage());
+                System.err.println(LanguageService.getFormattedString("error.person.edit", e.getMessage()));
             }
         } else {
-            System.out.println("ID não encontrado!");
+            System.out.println(LanguageService.getString("stock.person.id_notfound"));
         }
     }
 
@@ -633,11 +637,11 @@ public class Estoque {
      */
     public void removePessoa(Scanner scanner) throws IOException {
         if (pessoas.isEmpty()) {
-            System.out.println("Nenhuma pessoa cadastrada para remover.");
+            System.out.println(LanguageService.getString("stock.person.remove.none"));
             return;
         }
 
-        System.out.print("Digite o ID da pessoa que deseja remover: ");
+        System.out.print(LanguageService.getString("stock.person.prompt.remove"));
         String id = scanner.nextLine();
         Pessoa pessoa = buscarPessoaPorId(id); // Busca na memória
 
@@ -652,21 +656,21 @@ public class Estoque {
                 if (affectedRows > 0) {
                     // Remove da lista em memória
                     Pessoa removida = pessoas.remove(pessoas.indexOf(pessoa));
-                    System.out.println("Pessoa \"" + removida.getNome() + "\" removida com sucesso!");
+                    System.out.println(LanguageService.getFormattedString("stock.person.remove.success", pessoa.getNome()));
                 } else {
-                    System.out.println("ID não encontrado no banco de dados.");
+                    System.out.println(LanguageService.getString("error.id.notfound.db"));
                 }
             } catch (SQLException e) {
                 // Trata erro de chave estrangeira (se a pessoa tiver títulos associados)
                 // O código de erro "19" é específico do SQLite para violação de constraint
-                if (e.getErrorCode() == 19) { 
-                     System.err.println("Erro: Não é possível remover esta pessoa pois ela possui títulos (compras/vendas) registrados.");
+                if (e.getErrorCode() == 19) {
+                    System.err.println(LanguageService.getString("error.person.remove.constraint"));
                 } else {
-                     System.err.println("Erro ao remover pessoa: " + e.getMessage());
+                    System.err.println(LanguageService.getFormattedString("error.person.remove.generic", e.getMessage()));
                 }
             }
         } else {
-            System.out.println("ID não encontrado!");
+            System.out.println(LanguageService.getString("stock.person.id_notfound"));
         }
     }
 }

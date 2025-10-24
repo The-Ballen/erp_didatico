@@ -46,7 +46,7 @@ public class LogService {
             pstmt.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("Erro ao gravar log no banco de dados: " + e.getMessage());
+            System.err.println(LanguageService.getFormattedString("error.log.write", e.getMessage()));
         }
     }
 
@@ -60,12 +60,12 @@ public class LogService {
         SimpleDateFormat sdfBanco = new SimpleDateFormat("yyyy-MM-dd");
 
         try {
-            System.out.print("Digite a data inicial (dd/MM/yyyy): ");
+            System.out.print(LanguageService.getString("log.prompt.start_date"));
             String dataInicialStr = scanner.nextLine();
             Date dataInicialUtil = sdfUsuario.parse(dataInicialStr);
             String dataInicialSql = sdfBanco.format(dataInicialUtil); // Converte para YYYY-MM-DD
 
-            System.out.print("Digite a data final (dd/MM/yyyy): ");
+            System.out.print(LanguageService.getString("log.prompt.end_date"));
             String dataFinalStr = scanner.nextLine();
             Date dataFinalUtil = sdfUsuario.parse(dataFinalStr);
             String dataFinalSql = sdfBanco.format(dataFinalUtil); // Converte para YYYY-MM-DD
@@ -82,7 +82,7 @@ public class LogService {
                 
                 ResultSet rs = pstmt.executeQuery();
 
-                System.out.println("\n--- Logs de " + dataInicialStr + " a " + dataFinalStr + " ---");
+                System.out.println(LanguageService.getFormattedString("log.report.title", dataInicialStr, dataFinalStr));
                 // Cabeçalho idêntico ao original
                 System.out.println("Tipo,PessoaID,ProdutoID,Quantidade,Data,Hora"); 
 
@@ -106,18 +106,18 @@ public class LogService {
                 }
 
                 if (!encontrou) {
-                    System.out.println("Nenhum registro encontrado nesse período.");
+                    System.out.println(LanguageService.getString("log.report.no_records"));
                 }
 
             } catch (SQLException e) {
-                 System.err.println("Erro ao consultar os logs: " + e.getMessage());
+                System.err.println(LanguageService.getFormattedString("error.log.query", e.getMessage()));
             } catch (ParseException e) {
-                System.err.println("Erro ao reformatar data do log: " + e.getMessage());
+                System.err.println(LanguageService.getFormattedString("error.log.date.reformat", e.getMessage()));
             }
-            System.out.println("--- Fim dos Logs ---");
+            System.out.println(LanguageService.getString("log.report.end"));
 
         } catch (ParseException e) {
-            System.err.println("Formato de data inválido. Use dd/MM/yyyy.");
+            System.err.println(LanguageService.getString("log.date.invalid_format"));
         }
     }
 }

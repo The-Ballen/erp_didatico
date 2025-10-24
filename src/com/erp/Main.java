@@ -9,16 +9,18 @@ public class Main {
         Estoque estoque = new Estoque();
 
         while (true) {
-            System.out.println("\nMenu:");
-            System.out.println("1. Gerenciar Produtos");
-            System.out.println("2. Gerenciar Pessoas");
-            System.out.println("3. Análise Preditiva");
-            System.out.println("4. Listar Títulos em Aberto");
-            System.out.println("5. Efetuar Pagamento");
-            System.out.println("6. Sair");
+            System.out.println(LanguageService.getString("main.menu.title"));
+            System.out.println(LanguageService.getString("main.menu.option1"));
+            System.out.println(LanguageService.getString("main.menu.option2"));
+            System.out.println(LanguageService.getString("main.menu.option3"));
+            System.out.println(LanguageService.getString("main.menu.option4"));
+            System.out.println(LanguageService.getString("main.menu.option5"));
+            System.out.println(LanguageService.getString("main.menu.option6"));
+            System.out.println(LanguageService.getString("main.menu.option7"));
+
             int choice = 0;
             boolean subMenu = false;
-            System.out.print("Escolha uma opção: ");
+            System.out.print(LanguageService.getString("prompt.choice"));
             choice = scanner.nextInt();
             scanner.nextLine(); // Consumir '\n' do buffer
             
@@ -27,18 +29,18 @@ public class Main {
                 case 1:
                     subMenu = true;
                     while (subMenu) {
-                        System.out.println("\nGerenciamento de Produtos:");
-                        System.out.println("1. Listar Produtos");
-                        System.out.println("2. Adicionar Produto");
+                        System.out.println(LanguageService.getString("product.menu.title"));
+                        System.out.println(LanguageService.getString("product.menu.option1"));
+                        System.out.println(LanguageService.getString("product.menu.option2"));
                         //System.out.println("3. Editar Produto (em breve)");
                         //System.out.println("4. Remover Produto (em breve)");
-                        System.out.println("3. Comprar Produto (Fornecedor)");
-                        System.out.println("4. Vender Produto (Cliente)");
-                        System.out.println("5. Relatório");
-                        System.out.println("6. Voltar");
+                        System.out.println(LanguageService.getString("product.menu.option3"));
+                        System.out.println(LanguageService.getString("product.menu.option4"));
+                        System.out.println(LanguageService.getString("product.menu.option5"));
+                        System.out.println(LanguageService.getString("product.menu.option6"));
                         
                         choice = 0;
-                        System.out.print("Escolha uma opção: ");
+                        System.out.print(LanguageService.getString("prompt.choice"));
                         choice = scanner.nextInt();
                         scanner.nextLine();
 
@@ -63,7 +65,7 @@ public class Main {
                                 break;
                     
                             default:
-                                System.out.println("Opção inválida. Tente novamente.");
+                                System.out.println(LanguageService.getString("option.invalid"));
                                 break;
                         }
                     }
@@ -71,15 +73,15 @@ public class Main {
                 case 2:
                     subMenu = true;
                     while (subMenu) {
-                        System.out.println("\nGerenciamento de Pessoas:");
-                        System.out.println("1. Listar Pessoas");
-                        System.out.println("2. Cadastrar Pessoas");
-                        System.out.println("3. Editar Pessoas");
-                        System.out.println("4. Remover Pessoas");
-                        System.out.println("5. Voltar");
+                        System.out.println(LanguageService.getString("person.menu.title"));
+                        System.out.println(LanguageService.getString("person.menu.option1"));
+                        System.out.println(LanguageService.getString("person.menu.option2"));
+                        System.out.println(LanguageService.getString("person.menu.option3"));
+                        System.out.println(LanguageService.getString("person.menu.option4"));
+                        System.out.println(LanguageService.getString("person.menu.option5"));
 
                         choice = 0;
-                        System.out.print("Escolha uma opção: ");
+                        System.out.print(LanguageService.getString("prompt.choice"));
                         choice = scanner.nextInt();
                         scanner.nextLine();
                         switch (choice) {
@@ -100,7 +102,7 @@ public class Main {
                                 break;
                     
                             default:
-                                System.out.println("Opção inválida. Tente novamente.");
+                                System.out.println(LanguageService.getString("option.invalid"));
                                 break;
                         }
                     }
@@ -108,13 +110,13 @@ public class Main {
                 case 3:
                     subMenu = true;
                     while (subMenu) {
-                        System.out.println("\nAnálise Preditiva:");
-                        System.out.println("1. Análise de Curva ABC");
-                        System.out.println("2. Previsão de Demanda");
-                        System.out.println("3. Voltar");
+                        System.out.println(LanguageService.getString("predictive.menu.title"));
+                        System.out.println(LanguageService.getString("predictive.menu.option1"));
+                        System.out.println(LanguageService.getString("predictive.menu.option2"));
+                        System.out.println(LanguageService.getString("predictive.menu.option3"));
 
                         choice = 0;
-                        System.out.print("Escolha uma opção: ");
+                        System.out.print(LanguageService.getString("prompt.choice"));
                         choice = scanner.nextInt();
                         scanner.nextLine();
 
@@ -129,7 +131,7 @@ public class Main {
                                 subMenu = false;
                                 break;
                             default:
-                                System.out.println("Opção inválida. Tente novamente.");
+                                System.out.println(LanguageService.getString("option.invalid"));
                                 break;
                         }
                     }
@@ -141,10 +143,29 @@ public class Main {
                     estoque.fazPagamento(scanner);
                     break;
                 case 6:
-                    System.out.println("Saindo...");
+                    // Menu de Alteração de Idioma
+                    System.out.println("\n1. Português (Brasil)");
+                    System.out.println("2. English (US)");
+                    System.out.print(LanguageService.getString("prompt.choice"));
+                    choice = scanner.nextInt();
+                    scanner.nextLine();
+                    switch(choice) {
+                        case 1:
+                            LanguageService.setLocale("pt", "BR");
+                            break;
+                        case 2:
+                            LanguageService.setLocale("en", "US");
+                            break;
+                        default:
+                            System.out.println(LanguageService.getString("option.invalid"));
+                            break;
+                    }
+                    break;
+                case 7:
+                    System.out.println(LanguageService.getString("main.exit.message"));
                     return;
                 default:
-                    System.out.println("Opção inválida. Tente novamente.");
+                    System.out.println(LanguageService.getString("option.invalid"));
             }
         }
     }

@@ -26,7 +26,7 @@ public class DbManager {
             // Cria a conexão com o banco
             conn = DriverManager.getConnection(DATABASE_URL);
         } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException("Fatal Error: Could not connect to the database." + e.getMessage(), e);
+            throw new RuntimeException(LanguageService.getString("error.db.fatal_connect") + e.getMessage(), e);
         }
         return conn;
     }
@@ -84,7 +84,7 @@ public class DbManager {
             stmt.execute(sqlLogs);
             
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal Error: Could not initialize database tables." + e.getMessage(), e);
+            throw new RuntimeException(LanguageService.getString("error.db.fatal_initialize") + e.getMessage(), e);
         }
     }
 }

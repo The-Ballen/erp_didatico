@@ -50,13 +50,13 @@ public class AnalisePreditiva {
         try {
             Map<String, Produto> mapaDeProdutos = carregarProdutosDoArquivo();
             if (mapaDeProdutos.isEmpty()) {
-                System.out.println("\nNenhum produto cadastrado para análise.");
+                System.out.println(LanguageService.getString("analysis.product.none"));
                 return;
             }
 
             Map<String, Double> faturamentoPorProduto = apurarFaturamentoDeVendasPorProduto(mapaDeProdutos);
             if (faturamentoPorProduto.isEmpty()) {
-                System.out.println("\nNenhuma venda registrada nos logs para análise.");
+                System.out.println(LanguageService.getString("analysis.sales.none"));
                 return;
             }
 
@@ -69,7 +69,7 @@ public class AnalisePreditiva {
             exibirRelatorioFinal(produtosClassificados, faturamentoGeral);
 
         } catch (IOException e) {
-            System.err.println("Erro ao ler os arquivos de dados para análise: " + e.getMessage());
+            System.err.println(LanguageService.getFormattedString("analysis.file.read_error", e.getMessage()));
         }
     }
 
@@ -98,9 +98,9 @@ public class AnalisePreditiva {
                 produtos.put(produto.getId(), produto);
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao carregar produtos para análise: " + e.getMessage());
+            System.err.println(LanguageService.getFormattedString("error.analysis.load.products", e.getMessage()));
             // Lança IOException para manter compatibilidade com a assinatura original
-            throw new IOException("Erro de banco de dados", e); 
+            throw new IOException("Database Error", e);
         }
         return produtos;
     }
@@ -132,8 +132,8 @@ public class AnalisePreditiva {
                 }
             }
         } catch (SQLException e) {
-             System.err.println("Erro ao apurar faturamento dos logs: " + e.getMessage());
-             throw new IOException("Erro de banco de dados", e);
+            System.err.println(LanguageService.getFormattedString("error.analysis.calc.revenue", e.getMessage()));
+            throw new IOException("Database Error", e);
         }
         return faturamento;
     }
@@ -213,16 +213,16 @@ public class AnalisePreditiva {
      */
     private static void exibirRelatorioFinal(Map<Character, List<ProdutoFaturamento>> produtosClassificados, double faturamentoGeral) {
         System.out.println("\n======================================================================");
-        System.out.println("              Relatório de Análise de Curva ABCD");
+        System.out.println(LanguageService.getString("analysis.abcd.report.title"));
         System.out.println("======================================================================");
-        System.out.printf(" Faturamento Total Analisado: R$ %.2f%n", faturamentoGeral);
+        System.out.printf(LanguageService.getString("analysis.abcd.total_revenue"), faturamentoGeral);
 
-        exibirSecaoDaClasse('A', "Mais importantes (até 70% do faturamento)", produtosClassificados.get('A'), faturamentoGeral);
-        exibirSecaoDaClasse('B', "Intermediários (de 70% a 90% do faturamento)", produtosClassificados.get('B'), faturamentoGeral);
-        exibirSecaoDaClasse('C', "Menos importantes (de 90% a 99% do faturamento)", produtosClassificados.get('C'), faturamentoGeral);
-        exibirSecaoDaClasse('D', "Menos relevantes (1% restante do faturamento)", produtosClassificados.get('D'), faturamentoGeral);
+        exibirSecaoDaClasse('A', LanguageService.getString("analysis.abcd.class_a"), produtosClassificados.get('A'), faturamentoGeral);
+        exibirSecaoDaClasse('B', LanguageService.getString("analysis.abcd.class_b"), produtosClassificados.get('B'), faturamentoGeral);
+        exibirSecaoDaClasse('C', LanguageService.getString("analysis.abcd.class_c"), produtosClassificados.get('C'), faturamentoGeral);
+        exibirSecaoDaClasse('D', LanguageService.getString("analysis.abcd.class_d"), produtosClassificados.get('D'), faturamentoGeral);
 
-        System.out.println("\n---------------------- Fim do Relatório ----------------------");
+        System.out.println(LanguageService.getString("analysis.report.end"));
     }
 
     /**
@@ -233,15 +233,19 @@ public class AnalisePreditiva {
      * @param faturamentoGeral O faturamento total para cálculo do percentual.
      */
     private static void exibirSecaoDaClasse(char classe, String descricao, List<ProdutoFaturamento> produtos, double faturamentoGeral) {
-        System.out.printf("\n--- CLASSE %C (%s) ---%n", classe, descricao);
+        System.out.printf(LanguageService.getString("analysis.abcd.class_title"), classe, descricao);
 
         if (produtos.isEmpty()) {
-            System.out.println("   Nenhum produto nesta classificação.");
+            System.out.println(LanguageService.getString("analysis.class.no_products"));
             return;
         }
 
         System.out.println("----------------------------------------------------------------------");
-        System.out.printf("%-5s | %-35s | %-15s | %s%n", "ID", "Produto", "Faturamento", "% do Total");
+        System.out.printf("%-5s | %-35s | %-15s | %s%n", 
+            LanguageService.getString("analysis.table.header.id"), 
+            LanguageService.getString("analysis.table.header.product"), 
+            LanguageService.getString("analysis.table.header.revenue"), 
+            LanguageService.getString("analysis.table.header.percent_total"));
         System.out.println("----------------------------------------------------------------------");
 
         double epsilon = 1e-9;
@@ -285,19 +289,19 @@ public class AnalisePreditiva {
      */
     public static void executarPrevisaoDeDemandaPonderada() {
         if (Math.abs(Arrays.stream(PESOS_POR_MES).sum() - 1.0) > 0.001) {
-            System.out.println("\nAVISO: A soma dos pesos configurados é diferente de 1.0. A previsão pode ser imprecisa.");
+            System.out.println(LanguageService.getString("analysis.demand.weights_warning"));
         }
 
         try {
             Map<String, Produto> mapaDeProdutos = carregarProdutosDoArquivo();
             if (mapaDeProdutos.isEmpty()) {
-                System.out.println("\nNenhum produto cadastrado para análise.");
+                System.out.println(LanguageService.getString("analysis.product.none"));
                 return;
             }
 
             Map<String, List<Integer>> historicoVendas = apurarVendasUltimosMeses(mapaDeProdutos);
             if (historicoVendas.isEmpty()) {
-                System.out.println("\nNenhum histórico de vendas encontrado para calcular a previsão.");
+                System.out.println(LanguageService.getString("analysis.demand.no_history"));
                 return;
             }
 
@@ -314,7 +318,7 @@ public class AnalisePreditiva {
             exibirRelatorioPrevisaoDemanda(previsoes);
 
         } catch (IOException | ParseException e) {
-            System.err.println("Erro ao processar os dados para previsão de demanda: " + e.getMessage());
+            System.err.println(LanguageService.getFormattedString("analysis.demand.process_error", e.getMessage()));
         }
     }
 
@@ -345,8 +349,8 @@ public class AnalisePreditiva {
                 }
             }
         } catch (SQLException e) {
-             System.err.println("Erro ao apurar vendas mensais: " + e.getMessage());
-             throw new IOException("Erro de banco de dados", e);
+            System.err.println(LanguageService.getFormattedString("error.analysis.calc.monthly_sales", e.getMessage()));
+            throw new IOException("Database Error", e);
         }
 
         // O restante da lógica deste método para montar o histórico final permanece idêntico
@@ -390,25 +394,27 @@ public class AnalisePreditiva {
                 .collect(Collectors.toList());
 
         System.out.println("\n======================================================================");
-        System.out.println("       Relatório de Previsão de Vendas para o Próximo Mês");
+        System.out.println(LanguageService.getString("analysis.demand.report.title"));
         System.out.println("======================================================================");
-        System.out.printf("       Análise baseada na Média Ponderada dos últimos %d meses%n", NUMERO_MESES_ANALISE);
+        System.out.printf(LanguageService.getString("analysis.demand.report.subtitle"), NUMERO_MESES_ANALISE);
         System.out.println("----------------------------------------------------------------------");
-        System.out.printf("%-5s | %-45s | %s%n", "ID", "Produto", "Previsão de Vendas");
+        System.out.printf("%-5s | %-45s | %s%n", 
+            LanguageService.getString("analysis.table.header.id"), 
+            LanguageService.getString("analysis.table.header.product"), 
+            LanguageService.getString("analysis.table.header.prediction"));
         System.out.println("----------------------------------------------------------------------");
 
         if(listaOrdenada.isEmpty()){
-            System.out.println("   Nenhuma previsão pôde ser calculada com os dados atuais.");
+            System.out.println(LanguageService.getString("analysis.demand.no_prediction"));
         } else {
             for (Map.Entry<Produto, Double> previsao : listaOrdenada) {
                 long previsaoArredondada = Math.round(previsao.getValue());
-                System.out.printf("%-5s | %-45.45s | %d unidades%n",
+                System.out.printf("%-5s | %-45.45s |" + LanguageService.getFormattedString("analysis.demand.prediction.units", previsaoArredondada),
                         previsao.getKey().getId(),
-                        previsao.getKey().getNome(),
-                        previsaoArredondada);
+                        previsao.getKey().getNome());
             }
         }
-        System.out.println("\n---------------------- Fim do Relatório ----------------------");
+        System.out.println(LanguageService.getString("analysis.report.end"));
     }
 
     /**
