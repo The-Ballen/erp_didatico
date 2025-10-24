@@ -50,7 +50,8 @@ public class DbManager {
                            + " nome TEXT NOT NULL,"
                            + " precoCompra REAL NOT NULL,"
                            + " precoVenda REAL NOT NULL,"
-                           + " quantidade INTEGER NOT NULL"
+                           + " quantidade INTEGER NOT NULL,"
+                           + " categoria TEXT NOT NULL DEFAULT 'Outros'"
                            + ");";
 
         String sqlTitulos = "CREATE TABLE IF NOT EXISTS Titulos ("

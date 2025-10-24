@@ -11,7 +11,16 @@ import java.text.SimpleDateFormat;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import weka.classifiers.Evaluation;
+import weka.classifiers.trees.J48;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.SerializationHelper;
 
 public class AnalisePreditiva {
     /**
@@ -83,7 +92,8 @@ public class AnalisePreditiva {
                     rs.getString("nome"),
                     rs.getDouble("precoCompra"),
                     rs.getDouble("precoVenda"),
-                    rs.getInt("quantidade")
+                    rs.getInt("quantidade"),
+                    rs.getString("categoria")
                 );
                 produtos.put(produto.getId(), produto);
             }
@@ -399,5 +409,145 @@ public class AnalisePreditiva {
             }
         }
         System.out.println("\n---------------------- Fim do Relatório ----------------------");
+    }
+
+    /**
+     * Executa o treinamento do classificador J48 com os dados do banco
+     * e salva o modelo treinado em disco.
+     */
+    public static void executarTreinamentoJ48() {
+        System.out.println("\n--- Iniciando Treinamento do Classificador J48 ---");
+        long inicio = System.nanoTime();
+
+        try {
+            // 1. Carregar os dados brutos do banco
+            Map<String, Produto> produtosMap = carregarProdutosDoArquivo();
+            if (produtosMap.isEmpty()) {
+                System.out.println("Nenhum produto no banco para treinar.");
+                return;
+            }
+            List<Produto> produtos = new ArrayList<>(produtosMap.values());
+
+            // 2. Definir os atributos (Features) que o Weka entenderá
+            ArrayList<Attribute> atributos = new ArrayList<>();
+
+            // Feature 1: Preço de Venda (Numérico)
+            Attribute attPrecoVenda = new Attribute("precoVenda");
+            atributos.add(attPrecoVenda);
+
+            // Features 2-N: Palavras-chave do Nome (Numérico, 0 ou 1)
+            Attribute attTeclado = new Attribute("tem_palavra_teclado"); atributos.add(attTeclado);
+            Attribute attMouse = new Attribute("tem_palavra_mouse"); atributos.add(attMouse);
+            Attribute attMonitor = new Attribute("tem_palavra_monitor"); atributos.add(attMonitor);
+            Attribute attSsd = new Attribute("tem_palavra_ssd"); atributos.add(attSsd);
+            Attribute attHd = new Attribute("tem_palavra_hd"); atributos.add(attHd);
+            Attribute attRam = new Attribute("tem_palavra_ram"); atributos.add(attRam);
+            Attribute attCabo = new Attribute("tem_palavra_cabo"); atributos.add(attCabo);
+            // Adicione mais atributos de palavras-chave aqui se desejar (ex: "gabinete", "fonte")
+
+            // Feature Final: A Classe (Rótulo) que queremos prever
+            Set<String> catSet = produtos.stream().map(Produto::getCategoria).collect(Collectors.toSet());
+            List<String> categoriasUnicas = new ArrayList<>(catSet);
+            Attribute attCategoria = new Attribute("categoria", categoriasUnicas);
+            atributos.add(attCategoria);
+
+            // 3. Criar o objeto Instances (conjunto de dados do Weka)
+            Instances dados = new Instances("produtos_erp", atributos, produtos.size());
+            dados.setClass(attCategoria); // Informa ao Weka qual atributo é a classe
+
+            // 4. Popular o Instances com nossos dados
+            for (Produto p : produtos) {
+                Instance inst = new DenseInstance(atributos.size());
+                inst.setDataset(dados); // Vincula a instância ao cabeçalho/dataset
+                String nomeLower = p.getNome().toLowerCase();
+
+                // Define os valores para cada atributo
+                inst.setValue(attPrecoVenda, p.getPrecoVenda());
+                inst.setValue(attTeclado, nomeLower.contains("teclado") ? 1.0 : 0.0);
+                inst.setValue(attMouse, nomeLower.contains("mouse") ? 1.0 : 0.0);
+                inst.setValue(attMonitor, nomeLower.contains("monitor") ? 1.0 : 0.0);
+                inst.setValue(attSsd, nomeLower.contains("ssd") ? 1.0 : 0.0);
+                inst.setValue(attHd, nomeLower.contains("hd") ? 1.0 : 0.0);
+                inst.setValue(attRam, nomeLower.contains("ram") ? 1.0 : 0.0);
+                inst.setValue(attCabo, nomeLower.contains("cabo") ? 1.0 : 0.0);
+
+                inst.setValue(attCategoria, p.getCategoria()); // Define a classe/rótulo
+
+                dados.add(inst);
+            }
+
+            System.out.println("Dados carregados e transformados para o Weka.");
+            System.out.println("Iniciando treinamento com " + dados.size() + " instâncias...");
+
+            // 5. Treinar o classificador J48
+            J48 classificador = new J48();
+            // classificador.setUnpruned(true); // Exemplo de opção do J48
+            classificador.buildClassifier(dados);
+
+            // 6. Avaliar o modelo (Cross-validation 10-folds)
+            Evaluation avaliacao = new Evaluation(dados);
+            avaliacao.crossValidateModel(classificador, dados, 10, new Random(1));
+
+            System.out.println("\n--- Relatório de Performance (Fase 1) ---");
+            System.out.println(avaliacao.toSummaryString());
+            System.out.println("\n--- Matriz de Confusão ---");
+            System.out.println(avaliacao.toMatrixString());
+
+            // 7. Salvar o modelo treinado para uso na Fase 2
+            // Garante que a pasta 'model' exista
+            new java.io.File("model").mkdirs();
+            SerializationHelper.write("model/j48_erp_model.model", classificador);
+            // Também salvamos o "cabeçalho" dos dados, essencial para a predição
+            SerializationHelper.write("model/j48_erp_header.model", new Instances(dados, 0));
+            System.out.println("\n>>> Modelo treinado e salvo em 'model/j48_erp_model.model'");
+
+        } catch (Exception e) {
+            System.err.println("ERRO CRÍTICO no treinamento J48: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            long fim = System.nanoTime();
+            System.out.printf(">>> Tempo Total de Treinamento e Avaliação: %d ms%n", TimeUnit.NANOSECONDS.toMillis(fim - inicio));
+            System.out.println("--- Treinamento Concluído ---");
+        }
+    }
+
+    /**
+     * Prevê a categoria de um novo produto com base no modelo J48 treinado.
+     * @param nome O nome do novo produto
+     * @param precoVenda O preço de venda do novo produto
+     * @return A string da categoria prevista (ex: "Perifericos")
+     * @throws Exception Se o modelo não for encontrado ou houver erro na predição
+     */
+    public static String preverCategoria(String nome, double precoVenda) throws Exception {
+        // 1. Carregar o modelo e o cabeçalho (estrutura de dados)
+        // Se os arquivos não existirem, lançará uma exceção
+        J48 classificador = (J48) SerializationHelper.read("model/j48_erp_model.model");
+        Instances header = (Instances) SerializationHelper.read("model/j48_erp_header.model");
+
+        // 2. Criar a nova instância para predição
+        Instance inst = new DenseInstance(header.numAttributes());
+        inst.setDataset(header); // Vincula ao cabeçalho (ESSENCIAL)
+
+        // 3. Preencher os atributos da nova instância
+        // DEVE SEGUIR A MESMA ORDEM E LÓGICA DO TREINAMENTO!
+        String nomeLower = nome.toLowerCase();
+
+        // Acessa os atributos pelo NOME para segurança
+        inst.setValue(header.attribute("precoVenda"), precoVenda);
+        inst.setValue(header.attribute("tem_palavra_teclado"), nomeLower.contains("teclado") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_mouse"), nomeLower.contains("mouse") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_monitor"), nomeLower.contains("monitor") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_ssd"), nomeLower.contains("ssd") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_hd"), nomeLower.contains("hd") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_ram"), nomeLower.contains("ram") ? 1.0 : 0.0);
+        inst.setValue(header.attribute("tem_palavra_cabo"), nomeLower.contains("cabo") ? 1.0 : 0.0);
+
+        // O atributo da classe (categoria) fica vazio (missing), pois é isso que queremos prever
+
+        // 4. Classificar a instância
+        double predIndex = classificador.classifyInstance(inst);
+
+        // 5. Retornar o nome da classe prevista
+        return header.classAttribute().value((int) predIndex);
     }
 }

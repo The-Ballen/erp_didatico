@@ -94,13 +94,34 @@ public class Estoque {
         System.out.print("Preço de venda do Produto: ");
         double precoVenda = scanner.nextDouble();
         scanner.nextLine();
+
+        // --- INÍCIO DA INTEGRAÇÃO WEKA (FASE 2) ---
+        String categoriaSugerida = "Outros"; // Default em caso de falha
+        try {
+            // Chama o método de predição
+            categoriaSugerida = AnalisePreditiva.preverCategoria(nome, precoVenda);
+        } catch (Exception e) {
+            System.err.println("\nAVISO: Não foi possível sugerir a categoria.");
+            //System.err.println("Detalhe: " + e.getMessage()); // Descomente para debug
+            System.err.println("Certifique-se de que o modelo foi treinado (Menu Análise -> Opção 3).");
+        }
+
+        // Mostra a sugestão e permite ao usuário aceitar (dando Enter) ou sobrescrever
+        System.out.print("Categoria do Produto (Sugerido: " + categoriaSugerida + "): ");
+        String categoria = scanner.nextLine();
+        if (categoria.trim().isEmpty()) {
+            categoria = categoriaSugerida; // Usuário aceitou a sugestão
+            System.out.println("Usando categoria sugerida: " + categoria);
+        }
+        // --- FIM DA INTEGRAÇÃO WEKA ---
+
         System.out.print("Quantidade de estoque inicial: ");
         int quantidade = scanner.nextInt();
         scanner.nextLine();
 
-        Produto produto = new Produto(id, nome, precoCompra, precoVenda, quantidade);
+        Produto produto = new Produto(id, nome, precoCompra, precoVenda, quantidade, categoria);
 
-        String sql = "INSERT INTO Produtos(id, nome, precoCompra, precoVenda, quantidade) VALUES(?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Produtos(id, nome, precoCompra, precoVenda, quantidade, categoria) VALUES(?, ?, ?, ?, ?, ?)";
         try (Connection conn = DbManager.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
@@ -109,6 +130,7 @@ public class Estoque {
             pstmt.setDouble(3, precoCompra);
             pstmt.setDouble(4, precoVenda);
             pstmt.setInt(5, quantidade);
+            pstmt.setString(6, categoria);
             pstmt.executeUpdate();
 
             produtos.add(produto);
@@ -125,7 +147,14 @@ public class Estoque {
     public void listaProdutos() {
         System.out.println("Produtos:");
         for (Produto produto : produtos) {
-            System.out.println("Id:" + produto.getId() + " | " + produto.getNome() + " | Preço de compra: R$ " + produto.getPrecoCompra() + " | Preço de venda: R$ " + produto.getPrecoVenda() + " | Quantidade em estoque: " + produto.getQuantidade());
+            System.out.println(
+                "Id:" + produto.getId() + 
+                " | " + produto.getNome() + 
+                " | Categoria: " + produto.getCategoria() + 
+                " | Preço de compra: R$ " + produto.getPrecoCompra() + 
+                " | Preço de venda: R$ " + produto.getPrecoVenda() + 
+                " | Quantidade em estoque: " + produto.getQuantidade()
+                );
         }
     }
 
@@ -427,7 +456,8 @@ public class Estoque {
                     rs.getString("nome"),
                     rs.getDouble("precoCompra"),
                     rs.getDouble("precoVenda"),
-                    rs.getInt("quantidade")
+                    rs.getInt("quantidade"),
+                    rs.getString("categoria")
                 );
                 produtos.add(produto);
             }
